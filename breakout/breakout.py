@@ -10,13 +10,10 @@ pygame.display.set_caption("SUPER BREAKOUT ESCAPE WAHOOO YIPEEE")
 screen = pygame.display.set_mode((1210,900))
 
 #variables =========================================
-ballpos = Vector2(600,800)
+ballpos = Vector2(500,800)
 itsGoverBroski = False
 
-row1 = list()
-row2 = list()
-row3 = list()
-row4 = list()
+rows = list()
 
 time = pygame.time.Clock()
 ticks = 0
@@ -41,11 +38,27 @@ class Ball:
     def update(self):
         self.pos.x -= self.xVel
         self.pos.y -= self.yVel
+        #right
+        if self.pos.x+self.radius >= 1178 and self.pos.y > 32+self.radius and self.pos.y < 868-self.radius:
+            self.xVel= -self.xVel 
 
-    def collision(self,brickpos,isbroken):
-        if self.pos:
-            pass 
-            #FIX THIS ____!@_IUBKIYdbiauewdbdliUAWBdliuwhianwclkjhndvluhnvlfshnfuewniueneiouwnhiunfoiuwehnfiuwhnevfuwhnefnwiuvfnwev
+    #x: 32 1178
+    #y: 32 868 
+
+    def draw(self):
+        pygame.draw.circle(screen, (255,255,255),self.pos,self.radius)
+
+    def collision(self,isbroken,brickposx,brickposy,brickwidth,brickheight):
+        if isbroken == False:
+            if self.pos.y == brickposy or self.pos.y == brickposy+brickheight:
+                print("yay")
+                if self.pos.x > brickposx and self.pos.x < brickposx+brickwidth:
+                    self.yVel = -self.yVel
+                    return True
+                elif self.pos.x+self.radius == brickposx or self.pos.x-self.radius == brickposx+brickwidth:
+                    self.xVel = -self.xVel
+                    return True
+        
 
 
 #brick ------------------------
@@ -58,35 +71,46 @@ class Brick:
         self.width = 120
         self.height = 40
 
-    def getPos(self):
-        if self.broken == False:
-            return self.pos and self.broken and self.width and self.height
-    
+    def getPosx(self):
+        return self.pos.x
+    def getPosy(self):
+        return self.pos.y
+    def getBroken(self):
+        return self.broken
+    def getWidth(self):
+        return self.width
+    def getHeight(self):
+        return self.height
+
     def draw(self):
         if self.broken == False:
             pygame.draw.rect(screen, self.colors, (self.pos.x,self.pos.y, self.width, self.height))
     
-    def collision(self):
-        pass
+    def collision(self,collided):
+        if collided == True:
+            self.broken = True
+
+#CREATE ==========================================
+theBall = Ball(ballpos)
 
 x = 90
 for i in range(8):
-    row1.append(Brick(x,60))
+    rows.append(Brick(x,60))
     x+=130
 
 x = 90
 for i in range(8):
-    row2.append(Brick(x,110))
+    rows.append(Brick(x,110))
     x+=130
 
 x = 90
 for i in range(8):
-    row3.append(Brick(x,160))
+    rows.append(Brick(x,160))
     x+=130
 
 x = 90
 for i in range(8):
-    row4.append(Brick(x,210))
+    rows.append(Brick(x,210))
     x+=130
 
 
@@ -101,18 +125,18 @@ while itsGoverBroski == False:
 
 
     #update -------------------
-
+    theBall.update()
+    for i in range(len(rows)):
+        rows[i].collision(theBall.collision(rows[i].getPosx(), rows[i].getPosy(),  rows[i].getBroken(),  rows[i].getWidth(),  rows[i].getHeight()))
 
     #render -------------------
-    for i in range(len(row1)):
-        row1[i].draw()
-    for i in range(len(row2)):
-        row2[i].draw()
-    for i in range(len(row3)):
-        row3[i].draw()
-    for i in range(len(row4)):
-        row4[i].draw()
+    screen.fill((0,0,0))
     
+    theBall.draw()
+    for i in range(len(rows)):
+        rows[i].draw()
+
+
     pygame.draw.rect(screen,(175,165,165),(0,0,1210,900),30)
     pygame.draw.rect(screen,(255,255,255),(30,30,1150,840),2)
     pygame.display.flip()
