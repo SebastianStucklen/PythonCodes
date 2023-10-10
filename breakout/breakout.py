@@ -10,14 +10,15 @@ pygame.display.set_caption("SUPER BREAKOUT ESCAPE WAHOOO YIPEEE")
 screen = pygame.display.set_mode((1210,900))
 
 #variables =========================================
-ballpos = Vector2(500,800)
+ballpos = Vector2(600,800)
 itsGoverBroski = False
 
 rows = list()
 
 time = pygame.time.Clock()
 ticks = 0
-
+score = 0
+totalbricks = 32
 #class =============================================
 
 #paddle -----------------------
@@ -28,9 +29,10 @@ class Paddle:
 class Ball:
     def __init__(self,startpos):
         self.pos = Vector2(startpos)
-        self.yVel = 5
-        self.xVel = -5
-        self.radius = 10
+        self.yVel = 6
+        self.xVel = -4.5
+        self.radius = 12
+        self.gover = False
 
     def getPos(self):
         return self.pos
@@ -41,6 +43,24 @@ class Ball:
         #right
         if self.pos.x+self.radius >= 1178 and self.pos.y > 32+self.radius and self.pos.y < 868-self.radius:
             self.xVel= -self.xVel 
+        #top
+        if self.pos.y-self.radius <= 32 and self.pos.x > 32+self.radius and self.pos.x < 1178-self.radius:
+            self.yVel= -self.yVel
+        #left
+        if self.pos.x-self.radius <= 32 and self.pos.y > 32+self.radius and self.pos.y < 868-self.radius:
+            self.xVel= -self.xVel 
+        #bottom
+        if self.pos.y+self.radius >= 868 and self.pos.x > 32+self.radius and self.pos.x < 1178-self.radius:
+            self.yVel= -self.yVel
+            #self.gover = True
+        
+        #corner
+        if self.pos.x < 30 or self.pos.x > 1180 or self.pos.y < 30 or self.pos.y > 870:
+            self.pos.x = 600
+            self.pos.y = 800
+            if self.yVel >0:
+                self.yVel = -self.yVel
+            pygame.time.wait(1200)
 
     #x: 32 1178
     #y: 32 868 
@@ -50,15 +70,30 @@ class Ball:
 
     def collision(self,isbroken,brickposx,brickposy,brickwidth,brickheight):
         if isbroken == False:
-            if self.pos.y == brickposy or self.pos.y == brickposy+brickheight:
-                print("yay")
+            if self.pos.y+self.radius >= brickposy and self.pos.y-self.radius <= brickposy+brickheight:
                 if self.pos.x > brickposx and self.pos.x < brickposx+brickwidth:
                     self.yVel = -self.yVel
                     return True
-                elif self.pos.x+self.radius == brickposx or self.pos.x-self.radius == brickposx+brickwidth:
+            if self.pos.y > brickposy and self.pos.y < brickposy+brickheight:
+                if self.pos.x+self.radius >= brickposx and self.pos.x-self.radius <= brickposx+brickwidth:
                     self.xVel = -self.xVel
                     return True
-        
+    
+    def paddleCollision(self,padPosX,padPosY,padW):
+        if self.pos.y+self.radius >= padPosY:
+            if self.pos.x+self.radius >= padPosX and self.pos.x-self.radius <= padPosX:
+                self.yVel = -self.yVel
+
+
+    def end(self,run):
+        if self.gover == True:
+            screen.fill((0,0,0))
+        if self.gover == True or run == True:
+            my_font = pygame.font.SysFont('Comic Sans MS', 30)
+            text1 = my_font.render(str("GOVER"),1,(255,255,255))
+            screen.blit(text1,(600,450))
+            self.xVel = 0
+            self.yVel = 0
 
 
 #brick ------------------------
@@ -70,6 +105,15 @@ class Brick:
         self.broken = False
         self.width = 120
         self.height = 40
+        self.animTimer = 0
+        #IMAGES
+        self.brickimg = pygame.image.load("breakout/brick.png")
+        self.crack = pygame.image.load("breakout/crack.png")
+        self.plode1 = pygame.image.load("breakout/plode1.png")
+        self.plode2 = pygame.image.load("breakout/plode2.png")
+        self.plode3 = pygame.image.load("breakout/plode3.png")
+
+        
 
     def getPosx(self):
         return self.pos.x
@@ -85,31 +129,45 @@ class Brick:
     def draw(self):
         if self.broken == False:
             pygame.draw.rect(screen, self.colors, (self.pos.x,self.pos.y, self.width, self.height))
+            screen.blit(self.brickimg,self.pos)
+        if self.broken == True:
+            if self.animTimer<=111:
+                self.animTimer += 1
+            if self.animTimer <= 30:
+                pygame.draw.rect(screen, self.colors, (self.pos.x,self.pos.y, self.width, self.height))
+                screen.blit(self.crack,self.pos)
+            elif self.animTimer <= 36:
+                screen.blit(self.plode1,self.pos)
+            elif self.animTimer <= 70:
+                screen.blit(self.plode2,self.pos)
+            elif self.animTimer <= 110:
+                screen.blit(self.plode3,self.pos)
+
+
     
-    def collision(self,collided):
-        if collided == True:
-            self.broken = True
+    def collision(self):
+        self.broken = True
 
 #CREATE ==========================================
 theBall = Ball(ballpos)
 
 x = 90
-for i in range(8):
+for i in range(totalbricks//4):
     rows.append(Brick(x,60))
     x+=130
 
 x = 90
-for i in range(8):
+for i in range(totalbricks//4):
     rows.append(Brick(x,110))
     x+=130
 
 x = 90
-for i in range(8):
+for i in range(totalbricks//4):
     rows.append(Brick(x,160))
     x+=130
 
 x = 90
-for i in range(8):
+for i in range(totalbricks//4):
     rows.append(Brick(x,210))
     x+=130
 
@@ -127,7 +185,9 @@ while itsGoverBroski == False:
     #update -------------------
     theBall.update()
     for i in range(len(rows)):
-        rows[i].collision(theBall.collision(rows[i].getPosx(), rows[i].getPosy(),  rows[i].getBroken(),  rows[i].getWidth(),  rows[i].getHeight()))
+        if theBall.collision(rows[i].getBroken(), rows[i].getPosx(), rows[i].getPosy(),  rows[i].getWidth(),  rows[i].getHeight()) == True:
+            rows[i].collision()
+            score+=1
 
     #render -------------------
     screen.fill((0,0,0))
@@ -139,4 +199,7 @@ while itsGoverBroski == False:
 
     pygame.draw.rect(screen,(175,165,165),(0,0,1210,900),30)
     pygame.draw.rect(screen,(255,255,255),(30,30,1150,840),2)
+    if score == totalbricks:
+        theBall.end(True)
+    theBall.end(False)
     pygame.display.flip()
