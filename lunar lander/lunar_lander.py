@@ -93,7 +93,7 @@ while doExit == False:
                     fg -= fuelCon*0.6
                 if g > 3:
                     g-=3
-
+    
     #physics
     xPos += xVel
     yPos += yVel
