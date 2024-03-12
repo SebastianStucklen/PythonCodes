@@ -4,7 +4,7 @@ import math
 
 pygame.init()
 
-screen = pygame.display.set_mode((800,800))
+screen = pygame.display.set_mode((900,900))
 pygame.display.set_caption("frostbyte owie owie call 911")
 
 
@@ -31,7 +31,7 @@ def drawsnow(lev, x1, y1, x5, y5):
 
 
 		x3 = ((x2+x4)+math.sqrt(3)*(y2-y4))/2
-		y3 = ((y2 + y4)+math.sqrt(3)*(x2 - x4))/2
+		y3 = ((y2 + y4)+math.sqrt(3)*(x4 - x2))/2
 
 		drawsnow(lev-1,x1, y1, x2, y2);
 		drawsnow(lev-1,x2, y2, x3, y3);
@@ -43,6 +43,8 @@ def drawsnow(lev, x1, y1, x5, y5):
 level = 0
 while True:
 	level+=1
-	drawsnow(level,1000,800,0,0)
+	drawsnow(level,200,700,700,700)
+	drawsnow(level,700,700,450,267)
+	drawsnow(level,450,267,200,700)
 	pygame.display.flip()
 
